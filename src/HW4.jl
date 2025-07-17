@@ -70,7 +70,7 @@ function train_hidden(h; epochs=10, rng=Xoshiro(1))
     state  = Training.TrainState(model, ps, st, AdamW(lambda=3e-4))
 
     for _ in 1:epochs
-       vjp = AutoZygote()
+        vjp = AutoZygote()
         for batch in train_dl
             _,_,_,state = Training.single_train_step!(vjp, LOSS, batch, state)
         end
@@ -83,9 +83,9 @@ function train_hidden(h; epochs=10, rng=Xoshiro(1))
 end
 
 # ----------------------------------------------------------------------------
-#  Main experiment -----------------------------------------------------------
+#  Task 1 experiment -----------------------------------------------------------
 # ----------------------------------------------------------------------------
-function main()
+function Task1()
     hidden_sizes = [10, 20, 40, 50, 100, 300]
     accs = Float64[]
     @info "Task 1: one-hidden-layer sweep on local Fashion-MNIST CSVs"
@@ -101,4 +101,44 @@ function main()
     @info "Plot saved to hidden_vs_accuracy.png"
 end
 
-main()
+# ----------------------------------------------------------------------------
+#  Task 2 experiment -----------------------------------------------------------
+# ----------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------
+#  Task 2: Random initialisation variability analysis ------------------------
+# ----------------------------------------------------------------------------
+function Task2()
+    @info "Task 2: Random initialisation test with hidden layer size = 30"
+
+    accs = Float64[]
+    seeds = 1:10
+    for seed in seeds
+        rng = Xoshiro(seed)
+        acc = train_hidden(30; epochs=10, rng=rng)
+        push!(accs, acc)
+        @info(@sprintf("Run %2d → acc = %.4f", seed, acc))
+    end
+
+    μ = mean(accs)
+    σ = std(accs)
+    @info(@sprintf("Mean accuracy: %.4f", μ))
+    @info(@sprintf("Std deviation: %.4f", σ))
+
+    scatter(seeds, accs .* 100;
+        xlabel="Run #",
+        ylabel="Test accuracy (%)",
+        title="Impact of Random Initialization (Hidden=30)",
+        legend=false,
+        marker=:diamond)
+
+    hline!([μ * 100], label="Mean", linestyle=:dash)
+    savefig("random_init_accuracy.png")
+    @info "Plot saved to random_init_accuracy.png"
+end
+
+# Run Task 1
+Task1()
+
+# Run Task 2
+
